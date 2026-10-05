@@ -28,10 +28,10 @@ Répartissez-vous le travail : chacun lance une ou deux conversations et ouvre a
 6. Écrivez **une phrase** de conclusion : ce que ces écarts vous autorisent à faire confiance… et ce qu'ils vous interdisent de supposer.
 
 ✅ **Preuve** — cochez, ou montrez au formateur
-- [ ] Le carnet contient le prompt de référence, collé une fois, avec la mention qu'il a servi mot pour mot aux trois essais.
-- [ ] `essai-A.html`, `essai-B.html` et `essai-C.html` existent dans `essais-n0`, chacun issu d'une conversation neuve.
-- [ ] Le tableau des écarts a trois colonnes et au moins quatre critères ; chaque cellule est un fait que vous pouvez montrer dans la page ou dans le code.
-- [ ] Une phrase de conclusion sur la confiance à accorder est écrite.
+- [X] Le carnet contient le prompt de référence, collé une fois, avec la mention qu'il a servi mot pour mot aux trois essais.
+- [X] `essai-A.html`, `essai-B.html` et `essai-C.html` existent dans `essais-n0`, chacun issu d'une conversation neuve.
+- [X] Le tableau des écarts a trois colonnes et au moins quatre critères ; chaque cellule est un fait que vous pouvez montrer dans la page ou dans le code.
+- [X] Une phrase de conclusion sur la confiance à accorder est écrite.
 
 
 🆘 **Si ça bloque**

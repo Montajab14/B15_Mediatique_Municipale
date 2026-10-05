@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Médi@ bot — Médiathèque Municipale</title>
+    <style>
+        :root {
+            --bg: #f2f6fb;
+            --card: #ffffff;
+            --primary: #2f6fed;
+            --primary-dark: #1f4fc0;
+            --bot: #eef3fe;
+            --user: #2f6fed;
+            --text: #1a2333;
+            --muted: #6b7590;
+            --radius: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+            background: linear-gradient(160deg, #e8f0fe 0%, var(--bg) 55%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            color: var(--text);
+        }
+
+        .app {
+            width: 100%;
+            max-width: 640px;
+            height: 92vh;
+            max-height: 780px;
+            background: var(--card);
+            border-radius: 20px;
+            box-shadow: 0 18px 50px rgba(30, 60, 120, 0.18);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            background: linear-gradient(120deg, var(--primary), #5a8bff);
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        header h1 {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        header p {
+            font-size: 0.78rem;
+            opacity: 0.85;
+        }
+
+        .status {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 5px 10px;
+            border-radius: 999px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #7ded9c;
+        }
+
+        #chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .msg {
+            max-width: 82%;
+            padding: 11px 15px;
+            border-radius: var(--radius);
+            line-height: 1.5;
+            font-size: 0.93rem;
+            animation: pop 0.22s ease;
+            white-space: pre-line;
+        }
+
+        @keyframes pop {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .bot {
+            align-self: flex-start;
+            background: var(--bot);
+            border-bottom-left-radius: 4px;
+        }
+
+        .user {
+            align-self: flex-end;
+            background: var(--user);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 0 20px 12px;
+            flex-shrink: 0;
+        }
+
+        .chip {
+            border: 1px solid #c9d8f5;
+            background: #fff;
+            color: var(--primary-dark);
+            border-radius: 999px;
+            padding: 7px 13px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .chip:hover {
+            background: var(--bot);
+        }
+
+        form {
+            display: flex;
+            gap: 10px;
+            padding: 14px 20px 18px;
+            border-top: 1px solid #e6ecf6;
+            flex-shrink: 0;
+        }
+
+        input {
+            flex: 1;
+            border: 1px solid #d4ddef;
+            border-radius: 999px;
+            padding: 12px 18px;
+            font-size: 0.93rem;
+            outline: none;
+            transition: border 0.15s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        button.send {
+            border: none;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 999px;
+            padding: 12px 22px;
+            font-size: 0.93rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        button.send:hover {
+            background: var(--primary-dark);
+        }
+
+        .typing {
+            display: flex;
+            gap: 4px;
+            padding: 14px 16px;
+        }
+
+        .typing span {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #9fb4d8;
+            animation: blink 1s infinite;
+        }
+
+        .typing span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <header>
+            <div class="logo">📚</div>
+            <div>
+                <h1>Médi@ bot</h1>
+                <p>Assistant de la Médiathèque Municipale</p>
+            </div>
+            <div class="status"><span class="dot"></span> En ligne</div>
+        </header>
+        <div id="chat"></div>
+        <div class="chips" id="chips"></div>
+        <form id="form">
+            <input id="input" type="text" placeholder="Posez votre question…" autocomplete="off" />
+            <button class="send" type="submit">Envoyer</button>
+        </form>
+    </div>
+
+    <script>
+        // ---- Base de connaissances : chaque entrée a des mots-clés et une réponse ----
+        const KB = [
+            {
+                keys: ["horaire", "heure", "ouvert", "ouvre", "ferme", "fermeture", "dimanche", "samedi"],
+                answer: "🕒 Horaires d'ouverture :\n• Lundi : 14h – 18h\n• Mardi – Vendredi : 10h – 19h\n• Samedi : 9h – 17h\n• Dimanche et jours fériés : fermé\n\nLa médiathèque ferme 15 minutes avant pour le rangement."
+            },
+            {
+                keys: ["inscription", "inscrire", "adhérer", "adhesion", "carte", "abonnement", "s'inscrire"],
+                answer: "🎫 Pour vous inscrire, c'est gratuit ! Il vous faut :\n• Une pièce d'identité\n• Un justificatif de domicile de moins de 3 mois\n\nRendez-vous à l'accueil, l'inscription ne prend que 5 minutes. La carte est valable 1 an, renouvelable sur place."
+            },
+            {
+                keys: ["emprunt", "emprunter", "prêt", "pret", "rendre", "retour", "délai", "delai", "durée", "combien de livre"],
+                answer: "📖 Emprunts :\n• Jusqu'à 5 documents par personne\n• Durée de prêt : 3 semaines\n• 2 renouvellements possibles (à l'accueil, par téléphone ou en ligne) si le document n'est pas réservé\n\nRetour possible par le bibliothèque retour (boîte) même aux heures de fermeture."
+            },
+            {
+                keys: ["retard", "amende", "penalite", "pénalité", "sanction"],
+                answer: "⏰ En cas de retard, votre carte est suspendue jusqu'au retour des documents. Pas d'amende, mais plus d'emprunt tant que le retard dure — pensez à renouveler !"
+            },
+            {
+                keys: ["ordinateur", "wifi", "internet", "poste", "informatique", "imprimante", "scanner", "photocopie"],
+                answer: "💻 Services numériques :\n• Wi-Fi gratuit dans tout le bâtiment\n• 8 postes informatiques en accès libre (1h, renouvelable)\n• Impression : 0,15 € / page noir et blanc, 0,50 € / page couleur\n• Scanner et photocopieur à disposition"
+            },
+            {
+                keys: ["livre", "roman", "rechercher", "catalogue", "trouver", "disponible", "reservation", "réserver", "bd", "bande dessinée", "manga", "poli"],
+                answer: "🔎 Le catalogue en ligne vous permet de rechercher un livre, une BD, un manga ou un DVD et de vérifier sa disponibilité.\n\nSi le document est emprunté, vous pouvez le réserver gratuitement : vous recevrez un mail ou un SMS dès son retour.\n\nBesoin d'aide pour chercher ? Les bibliothécaires sont là pour vous conseiller !"
+            },
+            {
+                keys: ["enfant", "jeunesse", "ado", "bébé", "bebe", "conte", "animation", "atelier", "activité", "activite", "club"],
+                answer: "🧒 Espace Jeunesse :\n• Secteur enfants dès 0 an avec coins lecture et jeux\n• Heure du conte : tous les mercredis à 10h30\n• Ateliers numériques pour les ados pendant les vacances\n• Club lecture jeunes un vendredi par mois\n\nConsultez le programme du mois à l'accueil ou sur notre site."
+            },
+            {
+                keys: ["adulte", "senior", "seniors", "facile", "malvoyant", "accessibilité", "accessibilite", "handicap", "pmr"],
+                answer: "🤝 Accessibilité :\n• Le bâtiment est entièrement accessible en fauteuil roulant (ascenseur, sanitaires PMR)\n• Livres en gros caractères et audio-livres\n• Postes équipés de logiciels d'agrandissement et de synthèse vocale\n• Livraison à domicile pour les personnes ne pouvant se déplacer — contactez-nous pour en bénéficier."
+            },
+            {
+                keys: ["exposition", "événement", "evenement", "conférence", "conference", "rencontre", "signature"],
+                answer: "🎉 Tout au long de l'année : expositions, rencontres d'auteurs, conférences et clubs de lecture.\n\nL'entrée aux événements est gratuite dans la limite des places disponibles. Programme complet à l'accueil et sur le site de la ville."
+            },
+            {
+                keys: ["musique", "cd", "dvd", "film", "cinéma", "cinema", "partition", "partition"],
+                answer: "🎼 L'espace Musique & Cinéma propose :\n• CDs (tous genres, classique et jazz inclus)\n• DVDs et Blu-rays (prêt 2 semaines)\n• Partitions et méthodes de musique\n• Deux postes d'écoute sur place avec casques"
+            },
+            {
+                keys: ["presse", "journal", "magazine", "quotidien"],
+                answer: "📰 La presse est en consultation libre sur place : quotidiens nationaux et régionaux, hebdomadaires et magazines. Les derniers numéros ne sortent pas, mais les numéros précédents peuvent être empruntés."
+            },
+            {
+                keys: ["etudiant", "étudiant", "travail", "silence", "salle", "etudier", "réviser", "reviser"],
+                answer: "🤫 Un espace de travail silencieux est disponible au 1er étage (30 places), avec prises électriques et Wi-Fi. Idéal pour réviser ou travailler en autonomie.\n\nDes salles de travail en groupe (4-8 personnes) peuvent être réservées gratuitement à l'accueil."
+            },
+            {
+                keys: ["adresse", "situer", "où", "ou est", "plan", "acces", "accès", "parking", "bus", "tram"],
+                answer: "📍 La médiathèque se situe Place de la République, en face de la mairie.\n\n• Bus : lignes 3 et 7, arrêt « Médiathèque »\n• Tram : ligne A, station République\n• Parking gratuit derrière le bâtiment (2h)\n• Parking à vélos sécurisé à l'entrée"
+            },
+            {
+                keys: ["contact", "telephone", "téléphone", "mail", "email", "appeler", "joindre"],
+                answer: "📞 Contact :\n• Téléphone : 01 23 45 67 89\n• Email : mediatheque@ville.fr\n• Horaires d'appel : du mardi au samedi, de 9h à 17h\n\nVous pouvez aussi nous écrire via le formulaire sur le site de la ville."
+            },
+            {
+                keys: ["perdu", "perdre", "abîmé", "abimé", "casse", "cassé", "detruit", "détruit"],
+                answer: "😰 Pas de panique ! En cas de document perdu ou endommagé :\n• Signalez-le à l'accueil dès que possible\n• Vous devrez remplacer le document (même titre ou titre équivalent validé par nos équipes)\n• Contactez-nous, on vous accompagnera dans la démarche."
+            }
+        ];
+
+        const FALLBACK = "Désolé, je n'ai pas compris votre question. 😅 Vous pouvez reformuler, ou essayer l'une des suggestions ci-dessous. Pour toute question précise, appelez-nous au 01 23 45 67 89.";
+
+        const GREETINGS = ["bonjour", "salut", "bonsoir", "hello", "coucou", "hey"];
+        const GREETING_ANSWER = "Bonjour ! 👋 Je suis Médi@ bot, l'assistant de la médiathèque.\n\nJe peux vous renseigner sur les horaires, l'inscription, les emprunts, les animations… Que souhaitez-vous savoir ?";
+
+        const THANKS = ["merci", "thanks", "super", "parfait", "génial", "genial", "nickel"];
+        const THANKS_ANSWER = "Avec plaisir ! 😊 N'hésitez pas si vous avez d'autres questions. Bonne lecture !";
+
+        const BYE = ["au revoir", "bye", "adieu", "ciao", "à bientôt", "a bientot", "bonne journée"];
+        const BYE_ANSWER = "À bientôt à la médiathèque ! 📚 Bonne journée.";
+
+        const SUGGESTIONS = ["Horaires d'ouverture", "Comment s'inscrire ?", "Emprunter un livre", "Accès et adresse", "Animations enfants", "Wi-Fi et ordinateurs"];
+
+        // ---- Utilitaires ----
+        const chat = document.getElementById("chat");
+        const chips = document.getElementById("chips");
+        const form = document.getElementById("form");
+        const input = document.getElementById("input");
+
+        function normalize(s) {
+            return s.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9\s'-]/g, " ")
+                .replace(/\s+/g, " ").trim();
+        }
+
+        function findAnswer(q) {
+            const n = normalize(q);
+            const words = n.split(" ");
+            if (BYE.some(g => n.includes(normalize(g)))) return BYE_ANSWER;
+            if (words.some(w => GREETINGS.includes(w))) return GREETING_ANSWER;
+            if (words.some(w => THANKS.includes(w))) return THANKS_ANSWER;
+
+            let best = null, bestScore = 0;
+            for (const entry of KB) {
+                let score = 0;
+                for (const key of entry.keys) {
+                    const k = normalize(key);
+                    if (k.includes(" ")) {
+                        if (n.includes(k)) score += 2;
+                    } else if (words.includes(k)) {
+                        score += 2;
+                    } else if (n.includes(k) && k.length >= 4) {
+                        score += 1;
+                    }
+                }
+                if (score > bestScore) { bestScore = score; best = entry; }
+            }
+            return bestScore >= 2 ? best.answer : FALLBACK;
+        }
+
+        function addMsg(text, who) {
+            const div = document.createElement("div");
+            div.className = "msg " + who;
+            div.textContent = text;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function botReply(userText) {
+            addMsg(userText, "user");
+            input.value = "";
+            // indicateur de frappe
+            const typing = document.createElement("div");
+            typing.className = "msg bot typing";
+            typing.innerHTML = "<span></span><span></span><span></span>";
+            chat.appendChild(typing);
+            chat.scrollTop = chat.scrollHeight;
+            setTimeout(() => {
+                typing.remove();
+                addMsg(findAnswer(userText), "bot");
+                renderChips();
+            }, 600 + Math.random() * 500);
+        }
+
+        function renderChips() {
+            chips.innerHTML = "";
+            for (const s of SUGGESTIONS) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "chip";
+                b.textContent = s;
+                b.onclick = () => botReply(s);
+                chips.appendChild(b);
+            }
+        }
+
+        form.addEventListener("submit", e => {
+            e.preventDefault();
+            const v = input.value.trim();
+            if (v) botReply(v);
+        });
+
+        // Message d'accueil
+        addMsg(GREETING_ANSWER, "bot");
+        renderChips();
+        input.focus();
+    </script>
+</body>
+
+</html>

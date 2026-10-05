@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Médiathèque Municipale – Assistant virtuel</title>
+<style>
+  :root {
+    --bg: #f2f6fa;
+    --panel: #ffffff;
+    --primary: #1d5c8c;
+    --primary-dark: #14466b;
+    --accent: #e8a33d;
+    --text: #1c2733;
+    --muted: #5b6b7c;
+    --bubble-bot: #eaf1f8;
+    --bubble-user: #1d5c8c;
+    --radius: 14px;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; align-items: stretch; }
+  .app { width: 100%; max-width: 680px; display: flex; flex-direction: column; min-height: 100vh; background: var(--panel); box-shadow: 0 0 30px rgba(0,0,0,.08); }
+
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff; padding: 18px 22px; display: flex; align-items: center; gap: 14px;
+  }
+  header .logo { width: 44px; height: 44px; border-radius: 50%; background: var(--accent);
+    display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  header h1 { font-size: 17px; font-weight: 600; }
+  header p { font-size: 12.5px; opacity: .85; }
+  .status { display: flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12px;
+    background: rgba(255,255,255,.15); padding: 5px 12px; border-radius: 999px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #6ce59a; }
+
+  #chat { flex: 1; overflow-y: auto; padding: 22px 20px; display: flex; flex-direction: column; gap: 12px; background: var(--bg); }
+  .msg { max-width: 82%; padding: 11px 15px; border-radius: var(--radius); line-height: 1.5; font-size: 14.5px; white-space: pre-line; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+  .msg.bot { align-self: flex-start; background: var(--bubble-bot); border-bottom-left-radius: 4px; }
+  .msg.user { align-self: flex-end; background: var(--bubble-user); color: #fff; border-bottom-right-radius: 4px; }
+  .msg.bot strong { color: var(--primary-dark); }
+  .typing { align-self: flex-start; display: flex; gap: 5px; padding: 14px 16px; background: var(--bubble-bot); border-radius: var(--radius); }
+  .typing span { width: 7px; height: 7px; border-radius: 50%; background: #9db6cc; animation: blink 1.2s infinite; }
+  .typing span:nth-child(2) { animation-delay: .2s; }
+  .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100% { opacity: .25; } 40% { opacity: 1; } }
+
+  .chips { padding: 8px 16px 4px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips button { border: 1px solid #c6d5e3; background: #fff; color: var(--primary);
+    padding: 7px 14px; border-radius: 999px; font-size: 13px; cursor: pointer; transition: .15s; }
+  .chips button:hover { background: var(--bubble-bot); }
+
+  form { display: flex; gap: 10px; padding: 14px 16px 18px; background: var(--panel); border-top: 1px solid #e4ebf2; }
+  input { flex: 1; border: 1px solid #cfdcea; border-radius: 999px; padding: 12px 18px; font-size: 14.5px; outline: none; }
+  input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(29,92,140,.12); }
+  form button { background: var(--primary); border: none; color: #fff; border-radius: 999px;
+    padding: 12px 22px; font-size: 14.5px; font-weight: 600; cursor: pointer; transition: .15s; }
+  form button:hover { background: var(--primary-dark); }
+
+  @media (max-width: 480px) { .msg { max-width: 92%; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">📚</div>
+    <div>
+      <h1>Médiathèque Municipale</h1>
+      <p>Votre assistant virtuel – posez vos questions !</p>
+    </div>
+    <div class="status"><span class="dot"></span> En ligne</div>
+  </header>
+
+  <div id="chat"></div>
+  <div class="chips" id="chips"></div>
+
+  <form id="form" autocomplete="off">
+    <input id="input" type="text" placeholder="Écrivez votre question…" aria-label="Votre question" />
+    <button type="submit">Envoyer</button>
+  </form>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Base de connaissances ---------- */
+  var KB = [
+    {
+      id: "horaires",
+      keywords: ["horaire", "heures", "ouvert", "ouvre", "ferme", "fermeture", "dimanche", "samedi", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "ouvert"],
+      answer: "🕘 <strong>Horaires d'ouverture</strong>\n" +
+              "• Mardi – Vendredi : 10h00 – 19h00\n" +
+              "• Samedi : 10h00 – 18h00\n" +
+              "• Dimanche & Lundi : fermé\n" +
+              "Fermeture annuelle fin août (2 semaines) et jours fériés."
+    },
+    {
+      id: "inscription",
+      keywords: ["inscription", "inscrire", "carte", "adhésion", "adhérer", "abonnement", "s'inscrire", "compte"],
+      answer: "💳 <strong>Inscription</strong>\n" +
+              "L'inscription est <strong>gratuite</strong> pour tous les habitants de la commune.\n" +
+              "Documents à fournir :\n" +
+              "• Une pièce d'identité\n" +
+              "• Un justificatif de domicile de moins de 3 mois\n" +
+              "• Une photo d'identité (facultative)\n\n" +
+              "Les moins de 18 ans doivent être accompagnés d'un responsable légal. La carte est valable 1 an."
+    },
+    {
+      id: "emprunt",
+      keywords: ["emprunt", "emprunter", "prêt", "preter", "rendre", "retour", "retard", "délai", "delai", "combien de livres"],
+      answer: "📖 <strong>Emprunts et retours</strong>\n" +
+              "• 5 livres / magazines, 2 DVD et 2 CD à la fois\n" +
+              "• Durée : 3 semaines (renouvelable 1 fois en ligne ou à l'accueil)\n" +
+              "• Retour en libre-service via la boîte de dépôt, 24h/24\n" +
+              "• Retard : suspension des emprunts jusqu'au retour, pas de pénalité financière."
+    },
+    {
+      id: "services",
+      keywords: ["service", "wifi", "ordinateur", "poste informatique", "impression", "photocopie", "salle d'étude", "étude", "travail", "bureau", "cafétéria"],
+      answer: "🛠️ <strong>Services sur place</strong>\n" +
+              "• Wi-Fi gratuit dans tout le bâtiment\n" +
+              "• 12 postes informatiques avec imprimante (0,10 € / page)\n" +
+              "• Salle d'étude de 30 places, en libre accès\n" +
+              "• Espaces presse et jeunesse\n" +
+              "• Cafétéria avec boissons chaudes (fermée le matin)"
+    },
+    {
+      id: "evenements",
+      keywords: ["événement", "evenement", "animation", "atelier", "club", "lecture", "conte", "conteur", "expo", "exposition", "activité", "activite", "vacances"],
+      answer: "🎪 <strong>Animations et événements</strong>\n" +
+              "• <strong>Contes pour enfants</strong> : chaque mercredi à 10h30 (3-6 ans)\n" +
+              "• <strong>Club lecture</strong> : 1er jeudi du mois à 18h00\n" +
+              "• <strong>Ateliers numériques</strong> : seniors, mardi à 14h30\n" +
+              "• <strong>Expositions</strong> : une nouvelle chaque mois dans le hall\n" +
+              "• Programme spécial pendant les vacances scolaires.\n\n" +
+              "Inscription conseillée au 01 23 45 67 89."
+    },
+    {
+      id: "numerique",
+      keywords: ["numérique", "numerique", "en ligne", "en-ligne", "ebook", "livre numérique", "application", "téléchargement", "telechargement", "streaming", "presse en ligne"],
+      answer: "💻 <strong>Ressources numériques</strong>\n" +
+              "Avec votre carte d'adhérent, accédez gratuitement à :\n" +
+              "• Une plateforme de livres numériques et d'audiolivres\n" +
+              "• Un kiosque de presse en ligne (magazines et journaux)\n" +
+              "• Des cours de langues en ligne\n" +
+              "• Des bases de données documentaires\n\n" +
+              "Tout est accessible depuis le portail de la médiathèque avec votre numéro de carte."
+    },
+    {
+      id: "jeunesse",
+      keywords: ["jeunesse", "enfant", "ados", "adolescent", "bébé", "bebe", "jeunes"],
+      answer: "🧒 <strong>Espace jeunesse</strong>\n" +
+              "• Un espace dédié 0-13 ans : albums, romans, documentaires, jeux de société\n" +
+              "• Espace ados avec BD et mangas\n" +
+              "• Lectures interactives sur tablette\n" +
+              "• Clubs et ateliers pendant les vacances\n\n" +
+              "Les enfants peuvent être inscrits dès la naissance !"
+    },
+    {
+      id: "accessibilite",
+      keywords: ["accès", "acces", "handicap", "pmr", "fauteuil", "aveugle", "malvoyant", "accessibilité", "accessibilite", "ascenseur"],
+      answer: "♿ <strong>Accessibilité</strong>\n" +
+              "• Bâtiment entièrement accessible PMR (rampe et ascenseur)\n" +
+              "• Postes informatiques adaptés avec logiciels d'agrandissement\n" +
+              "• Fonds en gros caractères et livres audio\n" +
+              "• Accueil de groupes sur rendez-vous.\n\n" +
+              "N'hésitez pas à demander l'aide du personnel !"
+    },
+    {
+      id: "contact",
+      keywords: ["contact", "téléphone", "telephone", "adresse", "email", "mail", "joindre", "où", "ou se trouve", "situer", "localisation"],
+      answer: "📍 <strong>Nous contacter</strong>\n" +
+              "Médiathèque Municipale\n" +
+              "12 place de la Culture, 00000 Ville\n" +
+              "📞 01 23 45 67 89\n" +
+              "✉️ mediatheque@ville.fr\n" +
+              "Bus : lignes 3 et 7 – arrêt « Centre culturel »"
+    },
+    {
+      id: "suggestions",
+      keywords: ["suggestion", "suggérer", "suggerer", "achat", "acquérir", "acquérir", "nouveauté", "nouveaute", "manque", "pas de livre"],
+      answer: "📝 <strong>Suggestions d'achat</strong>\n" +
+              "Un titre vous manque ? Proposez son acquisition :\n" +
+              "• Formulaire « Suggérer un titre » sur notre portail en ligne\n" +
+              "• Registre disponible à l'accueil\n" +
+              "Les acquisitions sont étudiées chaque semaine par les bibliothécaires, selon le budget et la politique d'acquisition."
+    },
+    {
+      id: "salutations",
+      keywords: ["bonjour", "salut", "bonsoir", "hello", "coucou", "hey", "yo"],
+      answer: "Bonjour ! 👋 Bienvenue à la médiathèque.\nJe peux vous renseigner sur les horaires, l'inscription, les emprunts, les animations, les ressources numériques et bien plus. Que souhaitez-vous savoir ?"
+    },
+    {
+      id: "merci",
+      keywords: ["merci", "super", "parfait", "génial", "genial", "top"],
+      answer: "Avec plaisir ! 😊 N'hésitez pas si vous avez d'autres questions. Bonne visite à la médiathèque !"
+    },
+    {
+      id: "au_revoir",
+      keywords: ["au revoir", "bye", "adieu", "à bientôt", "a bientot", "bonne journée", "bonne journee"],
+      answer: "À bientôt ! 📚 Bonne journée et bonne lecture !"
+    }
+  ];
+
+  var FALLBACK = "Je ne suis pas sûr de bien comprendre votre question. 🤔\n" +
+                 "Voici ce que je peux vous aider à trouver :\n" +
+                 "• Les horaires d'ouverture\n" +
+                 "• L'inscription et la carte d'adhérent\n" +
+                 "• Les emprunts et retours\n" +
+                 "• Les animations et ateliers\n" +
+                 "• Les ressources numériques\n" +
+                 "• Les services sur place (Wi-Fi, imprimantes…)\n\n" +
+                 "Essayez de reformuler, ou contactez-nous au 01 23 45 67 89.";
+
+  var CHIPS = ["Quels sont les horaires ?", "Comment s'inscrire ?", "Combien d'emprunts ?",
+               "Quelles animations ?", "Ressources numériques", "Comment vous contacter ?"];
+
+  /* ---------- Moteur de réponse ---------- */
+  function normalize(s) {
+    return s.toLowerCase()
+            .replace(/[ÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ]/g, function (c) {
+              return { "à": "a", "â": "a", "ä": "a", "é": "e", "è": "e", "ê": "e", "ë": "e",
+                       "î": "i", "ï": "i", "ô": "o", "ö": "o", "ù": "u", "û": "u", "ü": "u", "ç": "c" }[c] || c;
+            })
+            .replace(/[''-]/g, " ")
+            .replace(/[^\w\s]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+  }
+
+  function answer(raw) {
+    var q = normalize(raw);
+    var best = null, bestScore = 0;
+    for (var i = 0; i < KB.length; i++) {
+      var score = 0;
+      for (var j = 0; j < KB[i].keywords.length; j++) {
+        var kw = normalize(KB[i].keywords[j]);
+        if (!kw) continue;
+        if (q.indexOf(kw) !== -1) score += (kw.indexOf(" ") !== -1) ? 3 : 2;
+        else if (kw.length > 4 && q.indexOf(kw.slice(0, Math.ceil(kw.length * 0.75))) !== -1) score += 1;
+      }
+      if (score > bestScore) { bestScore = score; best = KB[i]; }
+    }
+    return best && bestScore >= 2 ? best.answer : FALLBACK;
+  }
+
+  /* ---------- UI ---------- */
+  var chat = document.getElementById("chat");
+  var chips = document.getElementById("chips");
+  var input = document.getElementById("input");
+  var form = document.getElementById("form");
+
+  function scroll() { chat.scrollTop = chat.scrollHeight; }
+
+  function addMsg(text, who) {
+    var div = document.createElement("div");
+    div.className = "msg " + who;
+    div.innerHTML = text;
+    chat.appendChild(div);
+    scroll();
+  }
+
+  function botReply(userText) {
+    var typing = document.createElement("div");
+    typing.className = "typing";
+    typing.innerHTML = "<span></span><span></span><span></span>";
+    chat.appendChild(typing);
+    scroll();
+    setTimeout(function () {
+      typing.remove();
+      addMsg(answer(userText), "bot");
+    }, 500 + Math.random() * 500);
+  }
+
+  function send(text) {
+    if (!text.trim()) return;
+    addMsg(text.replace(/</g, "&lt;"), "user");
+    botReply(text);
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    send(input.value);
+    input.value = "";
+  });
+
+  CHIPS.forEach(function (label) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.textContent = label;
+    b.addEventListener("click", function () { send(label); });
+    chips.appendChild(b);
+  });
+
+  addMsg("Bonjour et bienvenue ! 👋 Je suis l'assistant virtuel de la médiathèque municipale.\n\n" +
+         "Posez-moi vos questions sur les horaires, l'inscription, les emprunts, les animations et les services. " +
+         "Vous pouvez aussi utiliser les boutons ci-dessous.", "bot");
+})();
+</script>
+</body>
+</html>

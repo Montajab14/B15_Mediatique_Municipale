@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Médiathèque Municipale — Assistant</title>
+    <style>
+      :root {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color-scheme: light dark;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background: #eef2f7;
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 16px;
+        color: #1a2332;
+      }
+      .app {
+        width: 100%;
+        max-width: 640px;
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 32px);
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(20, 40, 80, 0.12);
+        overflow: hidden;
+      }
+      header {
+        background: linear-gradient(135deg, #2b5aa8, #4a90d9);
+        color: #fff;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      header .avatar {
+        width: 44px; height: 44px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px;
+      }
+      header h1 { font-size: 1rem; font-weight: 600; }
+      header p { font-size: 0.78rem; opacity: 0.85; }
+      #chat {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: #f7f9fc;
+      }
+      .msg {
+        max-width: 82%;
+        padding: 10px 14px;
+        border-radius: 14px;
+        font-size: 0.92rem;
+        line-height: 1.45;
+        white-space: pre-line;
+        animation: pop 0.18s ease-out;
+      }
+      .bot {
+        background: #ffffff;
+        border: 1px solid #dde4ee;
+        border-bottom-left-radius: 4px;
+        align-self: flex-start;
+      }
+      .user {
+        background: #2b5aa8;
+        color: #fff;
+        border-bottom-right-radius: 4px;
+        align-self: flex-end;
+      }
+      @keyframes pop { from { opacity: 0; transform: translateY(4px); } }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-self: flex-start;
+        max-width: 90%;
+      }
+      .chip {
+        background: #e3edff;
+        color: #2b5aa8;
+        border: 1px solid #bcd0f5;
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .chip:hover { background: #cfe0ff; }
+      .typing span {
+        display: inline-block;
+        width: 6px; height: 6px;
+        margin: 0 1px;
+        background: #98a4b8;
+        border-radius: 50%;
+        animation: blink 1s infinite;
+      }
+      .typing span:nth-child(2) { animation-delay: 0.2s; }
+      .typing span:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+      form {
+        display: flex;
+        gap: 8px;
+        padding: 12px;
+        border-top: 1px solid #e4e9f0;
+        background: #fff;
+      }
+      input {
+        flex: 1;
+        border: 1px solid #ccd5e0;
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-size: 0.92rem;
+        outline: none;
+      }
+      input:focus { border-color: #4a90d9; }
+      button.send {
+        background: #2b5aa8;
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        width: 44px;
+        height: 44px;
+        cursor: pointer;
+        font-size: 1.1rem;
+        transition: background 0.15s;
+      }
+      button.send:hover { background: #1f4488; }
+      @media (prefers-color-scheme: dark) {
+        body { background: #10151d; }
+        .app { background: #1a2130; }
+        #chat { background: #141a26; }
+        .bot { background: #222b3d; border-color: #333f55; color: #e8edf5; }
+        .chip { background: #243350; color: #9cc2ff; border-color: #35496e; }
+        .chip:hover { background: #2d3f66; }
+        input { background: #141a26; border-color: #3a4657; color: #e8edf5; }
+        form { background: #1a2130; border-color: #2c3546; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <div class="avatar">📚</div>
+        <div>
+          <h1>Assistant de la Médiathèque</h1>
+          <p id="status">En ligne — posez votre question</p>
+        </div>
+      </header>
+      <div id="chat"></div>
+      <form id="form" autocomplete="off">
+        <input id="input" type="text" placeholder="Écrivez votre message…" aria-label="Votre message" />
+        <button class="send" type="submit" aria-label="Envoyer">➤</button>
+      </form>
+    </div>
+
+    <script>
+      // ============================================================
+      // Base de connaissances de la médiathèque (à personnaliser !)
+      // ============================================================
+      const MEDIATHEQUE = {
+        nom: "la Médiathèque Municipale",
+        adresse: "12 place de la Culture, 00000 Ville",
+        telephone: "01 23 45 67 89",
+        email: "mediatheque@ville.fr",
+        horaires: [
+          ["Lundi", "14h – 19h"],
+          ["Mardi", "10h – 19h"],
+          ["Mercredi", "10h – 18h"],
+          ["Jeudi", "14h – 19h"],
+          ["Vendredi", "10h – 18h"],
+          ["Samedi", "10h – 17h"],
+          ["Dimanche", "Fermée"]
+        ],
+        inscription: "L'inscription est gratuite pour tous les habitants de la commune. Il suffit de vous présenter à l'accueil avec une pièce d'identité et un justificatif de domicile (moins de 3 mois). Les moins de 15 ans doivent être accompagnés d'un parent.",
+        pret: "Vous pouvez emprunter jusqu'à 6 documents pour une durée de 3 semaines, renouvelable une fois (sauf réservation par un autre lecteur). Les retours peuvent se faire au retour-libre 24h/24 à l'entrée.",
+        retard: "Au-delà de la date de retour, un blocage temporaire des prêts est appliqué jusqu'au rendu des documents. Aucune amende n'est perçue, mais merci de rendre vos documents à temps pour les autres lecteurs !",
+        numerique: "La médiathèque propose : accès Wi-Fi gratuit, 12 postes informatiques, impression (0,10 €/page noire et blanc, 0,50 €/page couleur), tablettes et liseuses en prêt, et portail de livres numériques accessible 24h/24 avec votre carte.",
+        animation: "Chaque semaine : heure du conte (mercredi 10h30, 3-6 ans), club lecture (jeudi 18h), atelier numérique pour seniors (vendredi 14h). Pendant les vacances : ateliers créatifs, projections, rencontres d'auteurs. Programme complet sur le site de la ville.",
+        salle: "Deux salles de travail en groupe (réservables 7 jours à l'avance, 2h maximum) et des espaces silencieux en étage. Le café-bibliothèque accueille boissons et collations légères.",
+        accessibility: "Le bâtiment est entièrement accessible PMR : rampe d'accès, ascenseur, postes de lecture adaptés, parcours en gros caractères et malvoyants. Un accueil spécifique est proposé sur rendez-vous.",
+        don: "Les dons de livres sont acceptés s'ils sont en bon état, après validation par le personnel (2 cartons maximum par personne et par mois). Les doublons sont revus lors de la bourse annuelle aux livres.",
+        contact: "Par téléphone au 01 23 45 67 89, par courriel à mediatheque@ville.fr, ou directement à l'accueil. Nous répondons aux messages sous 48h ouvrées.",
+        carte: "Votre carte de médiathèque fonctionne aussi dans les bibliothèques partenaires du réseau intercommunal. En cas de perte, un duplicata est délivré gratuitement.",
+        default: "Je n'ai pas la réponse exacte à cette question, mais le personnel de la médiathèque se fera un plaisir de vous aider : 01 23 45 67 89 ou mediatheque@ville.fr. Vous pouvez aussi reformuler votre question (horaires, inscription, emprunts, animations, salle d'étude…)."
+      };
+
+      // Mots-clés → réponse. Le premier match gagne.
+      const RULES = [
+        { k: ["bonjour", "salut", "bonsoir", "coucou", "hello", "hey"],
+          r: () => `Bonjour et bienvenue ! 👋 Je suis l'assistant virtuel de ${MEDIATHEQUE.nom}. Je peux vous renseigner sur les horaires, l'inscription, les emprunts, le numérique, les animations… Que souhaitez-vous savoir ?` },
+        { k: ["merci"], r: () => "Avec grand plaisir ! N'hésitez pas si vous avez d'autres questions. Bonne lecture ! 📖" },
+        { k: ["au revoir", "bye", "à plus", "a plus"], r: () => "Au revoir et à bientôt à la médiathèque ! 👋" },
+        { k: ["horaire", "horaire", "ouvert", "ouvre", "ferme", "fermé", "heure"],
+          r: () => "Voici nos horaires :\n" + MEDIATHEQUE.horaires.map(h => `• ${h[0]} : ${h[1]}`).join("\n") },
+        { k: ["inscription", "s'inscrire", "m'inscrire", "carte", "adhérer", "adhesion", "adhésion", "abonnement"], r: () => MEDIATHEQUE.inscription },
+        { k: ["emprunt", "prêt", "pret", "rendre", "retour", "renouvel", "livre", "dvd", "cd", "combi"], r: () => MEDIATHEQUE.pret },
+        { k: ["retard", "amende", "penalite", "pénalité", "perdu", "perd"], r: () => MEDIATHEQUE.retard },
+        { k: ["wifi", "wi-fi", "ordinateur", "internet", "imprim", "numerique", "numérique", "e-book", "ebook", "liseuse", "tablette", "numerique"], r: () => MEDIATHEQUE.numerique },
+        { k: ["animation", "atelier", "conte", "activité", "activite", "vacances", "evenement", "événement", "jeune", "enfant", "club"], r: () => MEDIATHEQUE.animation },
+        { k: ["salle", "travail", "groupe", "etud", "étude", "reserve", "réserve", "silence", "cafe", "café"], r: () => MEDIATHEQUE.salle },
+        { k: ["acces", "accès", "pmr", "handicap", "fauteuil", "aveugle", "malvoyant", "accessib"], r: () => MEDIATHEQUE.accessibility },
+        { k: ["don", "donner", "offrir mes"], r: () => MEDIATHEQUE.don },
+        { k: ["contact", "telephone", "téléphone", "mail", "courriel", "email", "appeler", "joindre", "adresse", "situer", "trouver", "ou ca", "où ça"], r: () => `${MEDIATHEQUE.contact}\n\n📍 ${MEDIATHEQUE.adresse}\n📞 ${MEDIATHEQUE.telephone}\n✉️ ${MEDIATHEQUE.email}` },
+        { k: ["partenaire", "reseau", "réseau", "reseau intercommunal", "duplicata", "perdu ma carte"], r: () => MEDIATHEQUE.carte }
+      ];
+
+      const SUGGESTIONS = ["Quels sont vos horaires ?", "Comment m'inscrire ?", "Combien de documents puis-je emprunter ?", "Quelles animations proposez-vous ?", "Y a-t-il du wifi ?", "Comment vous contacter ?"];
+
+      // ============================================================
+      // Logique de conversation
+      // ============================================================
+      const chat = document.getElementById("chat");
+      const form = document.getElementById("form");
+      const input = document.getElementById("input");
+      const status = document.getElementById("status");
+
+      function normalize(s) {
+        return s.toLowerCase()
+          .replace(/[éèêë]/g, "e").replace(/[àâä]/g, "a").replace(/[îï]/g, "i")
+          .replace(/[ôö]/g, "o").replace(/[ùûü]/g, "u").replace(/ç/g, "c")
+          .replace(/'/g, "'").replace(/\s+/g, " ").trim();
+      }
+
+      function addMsg(text, who) {
+        const div = document.createElement("div");
+        div.className = "msg " + who;
+        div.textContent = text;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+      }
+
+      function addChips() {
+        const wrap = document.createElement("div");
+        wrap.className = "chips";
+        SUGGESTIONS.slice(0, 4).forEach(s => {
+          const c = document.createElement("button");
+          c.type = "button";
+          c.className = "chip";
+          c.textContent = s;
+          c.addEventListener("click", () => { wrap.remove(); ask(s); });
+          wrap.appendChild(c);
+        });
+        chat.appendChild(wrap);
+        chat.scrollTop = chat.scrollHeight;
+      }
+
+      function botReply(text) {
+        const norm = normalize(text);
+        let answer = MEDIATHEQUE.default;
+        for (const rule of RULES) {
+          if (rule.k.some(kw => norm.includes(normalize(kw)))) { answer = rule.r(); break; }
+        }
+        // Indicateur de frappe
+        const t = document.createElement("div");
+        t.className = "msg bot typing";
+        t.innerHTML = "<span></span><span></span><span></span>";
+        chat.appendChild(t);
+        chat.scrollTop = chat.scrollHeight;
+        status.textContent = "L'assistant écrit…";
+        setTimeout(() => {
+          t.remove();
+          addMsg(answer, "bot");
+          addChips();
+          status.textContent = "En ligne — posez votre question";
+        }, 600 + Math.random() * 500);
+      }
+
+      function ask(text) {
+        addMsg(text, "user");
+        botReply(text);
+      }
+
+      form.addEventListener("submit", e => {
+        e.preventDefault();
+        const v = input.value.trim();
+        if (!v) return;
+        input.value = "";
+        ask(v);
+      });
+
+      // Message de bienvenue
+      addMsg(`Bienvenue à ${MEDIATHEQUE.nom} ! 📚 Je peux vous renseigner sur les horaires, l'inscription, les emprunts, les animations, le numérique… Cliquez sur une suggestion ci-dessous ou écrivez votre question.`, "bot");
+      addChips();
+    </script>
+  </body>
+</html>

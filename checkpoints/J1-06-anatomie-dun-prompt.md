@@ -68,11 +68,11 @@
 | Vous savez expliquer chaque partie de la page en une phrase | | |
 
 ✅ **Preuve** — cochez, ou montrez au formateur
-- [ ] Les deux prompts sont collés dans le [carnet](../carnet.md), tels que vous les avez envoyés ; le second a ses six parties.
-- [ ] Les deux résultats sont décrits dans le carnet (fichiers touchés, ce que montre la page), avec, pour le second, la liste d'hypothèses de l'agent et votre réponse.
-- [ ] La grille est remplie pour les deux résultats, avec au moins cinq critères.
-- [ ] La page issue du prompt structuré s'affiche à `http://127.0.0.1:3000` (formulaire, liste vide, statut), et `git log --oneline` montre son commit.
-- [ ] `npm test`, lancé depuis `atelier`, est vert.
+- [X] Les deux prompts sont collés dans le [carnet](../carnet.md), tels que vous les avez envoyés ; le second a ses six parties.
+- [X] Les deux résultats sont décrits dans le carnet (fichiers touchés, ce que montre la page), avec, pour le second, la liste d'hypothèses de l'agent et votre réponse.
+- [X] La grille est remplie pour les deux résultats, avec au moins cinq critères.
+- [X] La page issue du prompt structuré s'affiche à `http://127.0.0.1:3000` (formulaire, liste vide, statut), et `git log --oneline` montre son commit.
+- [X] `npm test`, lancé depuis `atelier`, est vert.
 
 
 🆘 **Si ça bloque**

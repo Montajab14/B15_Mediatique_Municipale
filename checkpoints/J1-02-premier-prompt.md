@@ -24,10 +24,10 @@ Ce chatbot est un essai jetable : ce n'est pas le Cap Web de votre dossier `atel
 10. Gardez l'onglet du chat ouvert et ne supprimez rien : vous y revenez au checkpoint suivant.
 
 ✅ **Preuve** — cochez, ou montrez au formateur
-- [ ] Votre prompt et la première réponse du chat sont collés, en entier et tels quels, dans le [carnet](../carnet.md) (section J1-02).
-- [ ] `essais-n0/chatbot-v1.html` s'ouvre dans le navigateur et affiche votre chatbot, sur le thème choisi.
-- [ ] Le code du fichier est celui que le chat a écrit : rien n'a été corrigé à la main.
-- [ ] La conversation collée ne contient ni donnée personnelle ni clé (relue par l'autre membre du binôme).
+- [X] Votre prompt et la première réponse du chat sont collés, en entier et tels quels, dans le [carnet](../carnet.md) (section J1-02).
+- [X] `essais-n0/chatbot-v1.html` s'ouvre dans le navigateur et affiche votre chatbot, sur le thème choisi.
+- [X] Le code du fichier est celui que le chat a écrit : rien n'a été corrigé à la main.
+- [X] La conversation collée ne contient ni donnée personnelle ni clé (relue par l'autre membre du binôme).
 
 
 🆘 **Si ça bloque**

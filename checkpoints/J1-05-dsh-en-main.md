@@ -41,10 +41,10 @@ Les commandes sont dans la [notice dsh](../ressources/dsh.md) : recopiez-les tel
 10. Si le temps le permet, **voyez la barrière tenir** : demandez « Crée le fichier public/essai-dsh.txt contenant ok », refusez la demande d'autorisation qui apparaît, puis relancez `git status -- atelier` : toujours rien.
 
 ✅ **Preuve** — cochez, ou montrez au formateur
-- [ ] `dsh --version` affiche `0.1.5-rc.2` ; la session est ouverte sur le dossier `atelier`, en mode **Read Only**, avec le modèle `capweb-ia`.
-- [ ] La consigne et la réponse de l'agent sont collées dans le [carnet](../carnet.md), avec, pour chaque fichier cité, une ligne « existe ? description juste ? ».
-- [ ] `git status -- atelier`, lancé devant le formateur, ne montre aucun fichier modifié ni nouveau.
-- [ ] Aucune clé n'est visible : ni à l'écran, ni dans le carnet, ni dans `atelier`. Elle n'existe que dans `dsh-capweb/.credentials.yaml`.
+- [X] `dsh --version` affiche `0.1.5-rc.2` ; la session est ouverte sur le dossier `atelier`, en mode **Read Only**, avec le modèle `capweb-ia`.
+- [X] La consigne et la réponse de l'agent sont collées dans le [carnet](../carnet.md), avec, pour chaque fichier cité, une ligne « existe ? description juste ? ».
+- [X] `git status -- atelier`, lancé devant le formateur, ne montre aucun fichier modifié ni nouveau.
+- [X] Aucune clé n'est visible : ni à l'écran, ni dans le carnet, ni dans `atelier`. Elle n'existe que dans `dsh-capweb/.credentials.yaml`.
 
 
 🆘 **Si ça bloque**
