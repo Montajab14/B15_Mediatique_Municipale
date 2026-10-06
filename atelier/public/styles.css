@@ -1,5 +1,6 @@
 body { font-family: system-ui, sans-serif; margin: 2rem; color: #15213a; background: white; }
 main { max-width: 48rem; margin-inline: auto; }
 #messages { list-style: none; padding: 0; }
+#messages li { overflow-wrap: anywhere; }
 #chat-form { display: grid; gap: 0.5rem; margin-top: 1rem; }
 #message { min-height: 4rem; }
